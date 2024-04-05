@@ -8,7 +8,7 @@ import json
 import requests
 
 
-GEMINI_API_KEY = os.environ.get('api_key')
+GEMINI_API_KEY = os.environ['api_key']
 
 def calling_gemini_api(data):
     url = f'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
@@ -37,7 +37,6 @@ handler = WebhookHandler(channel_secret)
 
 @app.route("/", methods=['GET'])
 def main():
-  print("Hello World!")
   return "Hello World!"
 
 @app.route("/callback", methods=['POST'])
