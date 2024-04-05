@@ -8,7 +8,7 @@ import json
 import requests
 
 
-GEMINI_API_KEY = os.environ['api_key']
+GEMINI_API_KEY = "AIzaSyCJ8el9IL-cY5XuAmPyByjZnUxo-rCaALk"
 
 def calling_gemini_api(data):
     url = f'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
@@ -22,9 +22,6 @@ def calling_gemini_api(data):
 
 app = Flask(__name__)
 
-channel_access_token = os.environ['channel_access_token']
-channel_secret = os.environ['channel_secret']
-
 help_list = """❗指令列表❗
 幫助：取得指令列表
 挖礦：挖礦
@@ -32,8 +29,8 @@ help_list = """❗指令列表❗
 釣魚：釣魚釣魚釣到什麼魚"""
 
 # 這裡需要替換成你的Channel Access Token和Channel Secret
-line_bot_api = LineBotApi(channel_access_token)
-handler = WebhookHandler(channel_secret)
+line_bot_api = LineBotApi("ytVm0tpfG8X9kzD5R5wSk/bCXmmpexd3dEqoshh7kokntzR7maDrXZqxl4hm2+5ZKTf5xDJMxVbQzPZQCzkfdjOIB0pgv6CNQEmb3ZlSK9219CvMijKfyXVPWjF7TYWeCfJLDB5oRPvH8FN3fG3YCQdB04t89/1O/w1cDnyilFU=")
+handler = WebhookHandler("a55281f160215c491ac18c8c514cfe43")
 
 @app.route("/", methods=['GET'])
 def main():
