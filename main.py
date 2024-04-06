@@ -53,9 +53,11 @@ channel_secret = os.environ['channel_secret']
 
 help_list = """❗指令列表❗
 幫助：取得指令列表
-挖礦：挖礦
-背包：查看背包
-釣魚：釣魚釣魚釣到什麼魚"""
+
+直接對話即可使用AI
+目前支援：
+輸入 | 文字、圖片
+輸出 | 文字"""
 
 # 這裡需要替換成你的Channel Access Token和Channel Secret
 line_bot_api = LineBotApi(channel_access_token)
