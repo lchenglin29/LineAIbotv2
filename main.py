@@ -10,6 +10,7 @@ import base64
 
 
 GEMINI_API_KEY = os.environ['api_key']
+chat_history = {"user":{},"group":{}}
 
 def calling_gemini_api(data):
     url = f'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}'
@@ -53,6 +54,7 @@ channel_secret = os.environ['channel_secret']
 
 help_list = """❗指令列表❗
 幫助：取得指令列表
+關於：取得相關資訊
 
 直接對話即可使用AI
 目前支援：
@@ -87,18 +89,41 @@ def handle_message(event):
   if user_message == "幫助":
     reply_message = help_list
   else:
-    data = {
+      data = {
     "contents": [
         {
             "parts": [{"text": user_message}]
         }
     ]
     }
-    reply_message = calling_gemini_api(data)
-    if reply_message == "Error":
-      reply_message = "發生錯誤，請稍後再試"
-    else:
-      reply_message = reply_message["candidates"][0]["content"]["parts"][0]["text"]
+      if event.source.type == "group":
+        data = chat_history["group"].setdefault(event.source.group_id,data)
+      else:
+        data = chat_history["user"].setdefault(event.source.user_id,data)
+      reply_message = calling_gemini_api(data)
+      if reply_message == "Error":
+        reply_message = "發生錯誤，請稍後再試"
+      else:
+        reply_message = reply_message["candidates"][0]["content"]["parts"][0]["text"]
+        us = {
+          "role": "user",
+          "parts": [{"text": user_message}]
+        }
+        ai = {
+          "role": "model",
+          "parts": [{"text": reply_message}]
+        }
+        if event.source.type == "group":
+          chat = chat_history["group"].setdefault(event.source.group_id,{})
+          chat["contents"].append(us)
+          chat["contents"].append(ai)
+          chat_history["group"][event.source.group_id] = chat
+        else:
+          chat = chat_history["user"].setdefault(event.source.user_id,{})
+          chat["contents"].append(us)
+          
+          chat["contents"].append(ai)
+          chat_history["user"][event.source.user_id] = chat
   line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
 
 @handler.add(MessageEvent, message=ImageMessage)
