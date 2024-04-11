@@ -7,6 +7,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage,ImageMessa
 import json
 import requests
 import base64
+import copy
 
 
 GEMINI_API_KEY = os.environ['api_key']
@@ -20,6 +21,9 @@ def calling_gemini_api(data):
       print(response.json())
       return response.json()
     else:
+      print(chat_history)
+      print(response.status_code)
+      print(response.json())
       return "Error"
 
 def calling_gemini_vision_api(text, image_base64_string):
@@ -44,6 +48,7 @@ def calling_gemini_vision_api(text, image_base64_string):
     if response.status_code == 200:
       return response.json()
     else:
+      print(response.status_code)
       print(response.json())
       return "Error"
 
@@ -88,21 +93,39 @@ def handle_message(event):
   user_message = event.message.text
   if user_message == "幫助":
     reply_message = help_list
+  elif user_message == "清除資料1357":
+    if event.source.type == "group":
+      chat_history["group"].pop(event.source.group_id)
+    else:
+      chat_history["user"].pop(event.source.user_id)
+    reply_message = "已清除資料"
   else:
       data = {
     "contents": [
         {
-            "parts": [{"text": user_message}]
+          "role": "user",
+          "parts": [{"text": user_message}]
         }
     ]
     }
+      req = {
+        "role": "user",
+        "parts": [{"text": user_message}]
+      }
+      data2 = data
       if event.source.type == "group":
-        data = chat_history["group"].setdefault(event.source.group_id,data)
+        data3 = chat_history["group"].get(event.source.group_id,data2)
       else:
-        data = chat_history["user"].setdefault(event.source.user_id,data)
-      reply_message = calling_gemini_api(data)
+        data3 = chat_history["user"].get(event.source.user_id,data2)
+      print(f"data3是：{data3}")
+      if data3 != data:
+        data3 = copy.deepcopy(data3)
+        data3["contents"].append(req)
+      print(f"data3現在是：{data3}")
+      reply_message = calling_gemini_api(data3)
       if reply_message == "Error":
         reply_message = "發生錯誤，請稍後再試"
+
       else:
         reply_message = reply_message["candidates"][0]["content"]["parts"][0]["text"]
         us = {
@@ -114,16 +137,17 @@ def handle_message(event):
           "parts": [{"text": reply_message}]
         }
         if event.source.type == "group":
-          chat = chat_history["group"].setdefault(event.source.group_id,{})
+          chat = chat_history["group"].setdefault(event.source.group_id,{"contents":[]})
           chat["contents"].append(us)
           chat["contents"].append(ai)
           chat_history["group"][event.source.group_id] = chat
         else:
-          chat = chat_history["user"].setdefault(event.source.user_id,{})
+          chat = chat_history["user"].setdefault(event.source.user_id,{"contents":[]})
           chat["contents"].append(us)
           
           chat["contents"].append(ai)
           chat_history["user"][event.source.user_id] = chat
+          print(chat_history)
   line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
 
 @handler.add(MessageEvent, message=ImageMessage)
